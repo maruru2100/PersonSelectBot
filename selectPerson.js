@@ -3,6 +3,8 @@ module.exports.hello = function () {
     return "hoge hoge";
 }
 
-module.exports.selectPerson = function () {
-    
+module.exports.randomNum = function (size) {
+    let result = Math.floor(Math.random() * size );
+    console.log(result);
+    return "procces end"
 }

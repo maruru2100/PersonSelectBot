@@ -1,10 +1,9 @@
 const { Client, Intents } = require('discord.js');
 const client = new Client({ intents: Object.keys(Intents.FLAGS) });
 const dotenv = require('dotenv');
-const dice = require('./dice.js');
+const selectPerson = require('./selectPerson.js');
 const errorCheckMsg = '入力値がおかしい';
-const command1d6 = '1d6';
-const command2d6 = '2d6';
+
 
 dotenv.config();
 
@@ -31,7 +30,8 @@ client.on('messageCreate', async msg => {
     console.log(msg.content);
     // msg.content の内容が「"ID" "メッセージ"」のため、メッセージだけ取り出す
     let splitMsg = msg.content.split(' ');
-    // let results = dice.roleDice(splitMsg[1]);
+    let memberNum = selectPerson.randomNum(msg.channel.members.size);
+    let results = msg.channel.members.at(memberNum).nickname;
     console.log(results);
     msg.reply(results);
   }
