@@ -1,0 +1,2 @@
+# PersonSelectBot
+DiscordBotでくじ引き的な人選びを実施するbot
