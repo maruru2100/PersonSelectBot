@@ -9,8 +9,10 @@ DiscordBotでくじ引き的な人選びを実施するbot
 
 1. 範囲内の数字をランダムで一つ返すメソッド作成
 2. 渡したDiscordのニックネームをランダムで一つ返すように変更
+3. 引数でランダムで引数人数分選んで返す要に変更
+4. 引数に総当たりのtrue/falseを入れて総当たりパターンも作る。
 
-これらをISSUESで管理したい。
+これらを本当はISSUESで管理したい。
 
 ## 今後のアップデートでやりたいこと
 
@@ -22,5 +24,5 @@ DiscordBotでくじ引き的な人選びを実施するbot
 - ランダムで選出するために、ランダム数字を返す関数(randomNum())が必要。
 - randomNum()にCollection.sizeでそのチャンネルに参加しているメンバー数を取得して渡す。
 - sizeは受信したmessageから、message.channel.members.sizeでチャンネル内のメンバーのsizeを返す。
-- randomNum() の戻り値がintで0 ～ size-1 になっているので、Collection.at(戻り値).nickname で選ばれた人のニックネームを取得する。
-- messageに対してreplyで取得したニックネームを返却する。
+- randomNum() の戻り値がintで0 ～ size-1 になっているので、Collection.at(戻り値).displayName で選ばれた人のニックネームを取得する。
+- messageに対してreplyで取得した displayName を返却する。
