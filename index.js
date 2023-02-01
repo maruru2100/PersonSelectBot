@@ -2,6 +2,7 @@ const { Client, Intents } = require('discord.js');
 const client = new Client({ intents: Object.keys(Intents.FLAGS) });
 const dotenv = require('dotenv');
 const selectPerson = require('./selectPerson.js');
+const check = require('./check.js')
 const errorCheckMsg = '入力値がおかしい';
 
 
@@ -33,64 +34,59 @@ client.on('messageCreate', async msg => {
   if (msg.mentions.users.has(process.env.SELECT_PERSON_BOTID)) {
     console.log(msg.content);
     // msg.content の内容が「"ID" "メッセージ"」のため、メッセージだけ取り出す
-    let splitMsg = msg.content.split(' ');
+    const splitMsg = msg.content.split(' ');
     console.log('splitMsg-> ' + splitMsg);
-    let drawingSetNumber = splitMsg[1]; // 抽選組数
+    const drawingSetNumber = splitMsg[1]; // 抽選組数
+    console.log('抽選組数-> ' + drawingSetNumber);
     let members = msg.channel.members; // メンバー一覧(Collection)
     let allMemberSize = members.size; // メンバー全体人数
-    let drawingResultArray = []; // 抽選結果配列
 
-    // 全体抽選繰り返し処理
-    for (let index = 0; index < drawingSetNumber; index++) {
-      const drawingCount = allMemberSize / drawingSetNumber;
-      console.log('抽選組数-> ' + drawingSetNumber);
+    // TODO: 引数チェック
+    if (check.isCheckInput(drawingSetNumber, allMemberSize)) {
+      const drawingCount = allMemberSize / drawingSetNumber; // 
       console.log('抽選数-> ' + drawingCount);
-      let drawingResultNumArray = []; // 抽選結果番号の定義
-      console.log('arrsize -> ' + drawingResultNumArray.length);
+      let drawingResultArray = []; // 抽選結果配列
 
-      // 各組の抽選
-      while (drawingCount > drawingResultNumArray.length) {
-        console.log('抽選結果サイズ -> ' + drawingResultNumArray.length);
-        let drawingNo = selectPerson.randomNum(allMemberSize);
-        if (drawingResultNumArray.some(item => item === drawingNo) || drawingResultArray.flat().some(item => item === drawingNo)) {
+      // 全体抽選繰り返し処理
+      for (let index = 0; index < drawingSetNumber; index++) {
+        const drawingCount = allMemberSize / drawingSetNumber;
+        let drawingResultNumArray = []; // 抽選結果番号の定義
+
+        // 各組の抽選
+        while (drawingCount > drawingResultNumArray.length) {
+          console.log('抽選結果サイズ -> ' + drawingResultNumArray.length);
+          let drawingNo = selectPerson.randomNum(allMemberSize);
+          if (drawingResultNumArray.some(item => item === drawingNo) || drawingResultArray.flat().some(item => item === drawingNo)) {
+            continue;
+          } else {
+            drawingResultNumArray.push(drawingNo);
+          }
+        }
+        console.log(index + '回目抽選-> ' + drawingResultNumArray);
+        if (drawingResultArray.some(item => JSON.stringify(item.sort()) == JSON.stringify(drawingResultNumArray.sort()))) {
           continue;
         } else {
-          drawingResultNumArray.push(drawingNo);
+          drawingResultArray.push(drawingResultNumArray);
         }
       }
-      console.log(index + '回目抽選-> ' + drawingResultNumArray);
-      // let drawingNo2NameArray = drawingResultNumArray.map(x => members.at(x).displayName); // 抽選結果名前変換配列
-      if (drawingResultArray.some(item => JSON.stringify(item.sort()) == JSON.stringify(drawingResultNumArray.sort()))) {
-        continue;
-      } else {
-        drawingResultArray.push(drawingResultNumArray);
+
+      let drawingNo2NameArray = drawingResultArray.map(x => x.map(y => members.at(y).displayName)); // 抽選結果名前変換配列
+      console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
+
+
+      let results = drawingNo2NameArray.map(x => x.join(' VS '));
+      console.log(results);
+
+      for (const result of results) {
+        console.log(result);
+        msg.reply(result);
       }
+
+    } else {
+      msg.reply(errorCheckMsg);
     }
 
-    // TODO: x=> のところが本来配列なのに考慮されてない。
-    let drawingNo2NameArray = drawingResultArray.map(x => members.at(x).displayName); // 抽選結果名前変換配列
-    console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
 
-
-    let results = drawingNo2NameArray.map(x => x.join(' VS '));
-    console.log(results);
-
-    for (const result of results) {
-      console.log(result);
-      msg.reply(result)
-    }
-    // let drawnMemberNumber = selectPerson.randomNum(allMemberSize);
-    // let results = members.at(drawnMemberNumber).displayName;
-    // console.log(results);
-    // msg.reply(results);
-
-
-    // for (let index = 0; index < allMemberSize; index++) {
-    //   console.log('処理総数' + allMemberSize);
-    //   console.log('処理index->' + index);
-    //   let displayName = members.at(index).displayName
-    //   msg.reply('index= '+ index + '->' + displayName);
-    // }
   }
 });
 
