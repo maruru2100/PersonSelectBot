@@ -1,15 +1,19 @@
-module.exports.isCheckInput = function (input, allMemberSize) {
+module.exports.isCheckInput = function (input) {
 
     if (isNaN(Number(input))) {
         console.log('引数が数字じゃないです');
         return false;
     }
 
-    if (allMemberSize%input !== 0) {
-        console.log('全体人数に対して割り切れないです');
+    return true;
+    
+}
+
+module.exports.isCheckChannelCount  = function (drawingCount, allMemberSize) {
+    
+    if (drawingCount > allMemberSize) {
         return false;
     }
 
     return true;
-    
 }

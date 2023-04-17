@@ -1,15 +1,16 @@
 const { Client, Intents } = require('discord.js');
 const client = new Client({ intents: Object.keys(Intents.FLAGS) });
 const dotenv = require('dotenv');
-const selectPerson = require('./selectPerson.js');
+const selectPersonService = require('./selectPersonService.js');
 const check = require('./check.js')
-const errorCheckMsg = '入力値がおかしい';
+const errorCheckMsg = '入力値がおかしいです。 「メンション 数字」で連絡ください。';
 
 
 dotenv.config();
 
 // 起動時処理実装部
 client.on('ready', async () => {
+  // TODO: スラッシュコマンドの実装
   //スラッシュコマンドの設定値
   // const data  = [{
   //   name: '1d6',
@@ -36,60 +37,54 @@ client.on('messageCreate', async msg => {
     // msg.content の内容が「"ID" "メッセージ"」のため、メッセージだけ取り出す
     const splitMsg = msg.content.split(' ');
     console.log('splitMsg-> ' + splitMsg);
-    const drawingSetNumber = splitMsg[1]; // 抽選組数
-    console.log('抽選組数-> ' + drawingSetNumber);
-    let members = msg.channel.members; // メンバー一覧(Collection)
-    let allMemberSize = members.size; // メンバー全体人数
+    const inputDrawingCount = splitMsg[1]; // 抽選人数
+    console.log('抽選人数-> ' + drawingCount);
 
-    // TODO: 引数チェック
-    if (check.isCheckInput(drawingSetNumber, allMemberSize)) {
-      const drawingCount = allMemberSize / drawingSetNumber; // 
-      console.log('抽選数-> ' + drawingCount);
-      let drawingResultArray = []; // 抽選結果配列
+    // メッセージを送ったテキストチャンネル内のメンバー一覧を取得
+    // let members = msg.channel.members; // メンバー一覧(Collection)
+    // let allMemberSize = members.size; // メンバー全体人数
 
-      // 全体抽選繰り返し処理
-      for (let index = 0; index < drawingSetNumber; index++) {
-        const drawingCount = allMemberSize / drawingSetNumber;
-        let drawingResultNumArray = []; // 抽選結果番号の定義
-
-        // 各組の抽選
-        while (drawingCount > drawingResultNumArray.length) {
-          console.log('抽選結果サイズ -> ' + drawingResultNumArray.length);
-          let drawingNo = selectPerson.randomNum(allMemberSize);
-          if (drawingResultNumArray.some(item => item === drawingNo) || drawingResultArray.flat().some(item => item === drawingNo)) {
-            continue;
-          } else {
-            drawingResultNumArray.push(drawingNo);
-          }
-        }
-        console.log(index + '回目抽選-> ' + drawingResultNumArray);
-        if (drawingResultArray.some(item => JSON.stringify(item.sort()) == JSON.stringify(drawingResultNumArray.sort()))) {
-          continue;
-        } else {
-          drawingResultArray.push(drawingResultNumArray);
-        }
-      }
-
-      let drawingNo2NameArray = drawingResultArray.map(x => x.map(y => members.at(y).displayName)); // 抽選結果名前変換配列
-      console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
+    // メッセージを送ったメンバーが参加しているボイスチャンネルのメンバー一覧取得
+    let voiceChannel = msg.member.voice.channel;
+    let members = voiceChannel.members;
+    let allMemberSize = members.size;
 
 
-      let results = drawingNo2NameArray.map(x => x.join(' VS '));
-      console.log(results);
-
-      for (const result of results) {
-        console.log(result);
-        msg.reply(result);
-      }
-
-    } else {
+    // 引数チェック
+    if (!check.isCheckInput(inputDrawingCount)) {
       msg.reply(errorCheckMsg);
+    }
+
+    let drawingCount = Number(inputDrawingCount);
+
+    if (!check.isCheckChannelCount(drawingCount, allMemberSize)) {
+      msg.reply("指定された数字がチャンネルメンバー数を超えています。");
+    }
+
+
+    // 抽選
+    let drawingResultArray = new Array();
+    for (let index = 0; index < drawingCount; index++) {
+      drawingResultArray.push(selectPersonService.randomNum(allMemberSize));
+    }
+
+    let drawingNo2NameArray = drawingResultArray.map(x => x.map(y => members.at(y).displayName)); // 抽選結果名前変換配列
+    console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
+
+
+    let results = drawingNo2NameArray.map(x => x.join(' VS '));
+    console.log(results);
+
+    for (const result of results) {
+      console.log(result);
+      msg.reply(result);
     }
 
 
   }
 });
 
+// TODO: スラッシュコマンドの実装
 // スラッシュコマンド実装部
 // client.on("interactionCreate", async (interaction) => {
 //   if (!interaction.isCommand()) {
