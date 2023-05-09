@@ -11,9 +11,5 @@ module.exports.isCheckInput = function (input) {
 
 module.exports.isCheckChannelCount  = function (drawingCount, allMemberSize) {
     
-    if (drawingCount > allMemberSize) {
-        return false;
-    }
-
-    return true;
+    return drawingCount <= allMemberSize;
 }

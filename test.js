@@ -1,6 +1,6 @@
 // このファイルはモジュールのテストのための実行ファイル
 
-var f = require('./selectPerson.js');
+var f = require('./selectPersonService.js');
 
 console.log(f.hello());
 
