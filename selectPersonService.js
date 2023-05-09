@@ -16,7 +16,12 @@ module.exports.selectPerson = function(drawingCount, allMemberSize) {
     return ret;
 }
 
-// 指定されたサイズの範囲からランダムに数字を一つ返す。
+/**
+ * 指定されたサイズの範囲からランダムに数字を一つ返す。
+ * 
+ * @param {number} size 
+ * @returns 0～size-1 の範囲でランダムなnumber
+ */
 module.exports.randomNum = function (size) {
     // console.log('指定サイズ-> ' + size);
     let result = Math.floor(Math.random() * size );

@@ -1,8 +1,8 @@
 const { Client, Intents } = require('discord.js');
 const client = new Client({ intents: Object.keys(Intents.FLAGS) });
 const dotenv = require('dotenv');
-const selectPersonService = require('./selectPersonService.js');
-const check = require('./check.js')
+const selectPersonService = require('../selectPersonService.js');
+const check = require('../check.js')
 const errorCheckMsg = '入力値がおかしいです。 「メンション 数字」で連絡ください。';
 const check_OK = '0';
 const inputCheck_number_NG = '1';
@@ -62,14 +62,29 @@ client.on('messageCreate', async msg => {
 
     let checkResult = check_OK;
 
-    let results = [];
-
     // 引数チェック
-    if (check.isCheckInput(inputDrawingCount)) {
+    if (!check.isCheckInput(inputDrawingCount)) {
+      checkResult = inputCheck_number_NG;
+    }
 
-      let drawingCount = Number(inputDrawingCount);
+    let drawingCount = Number(inputDrawingCount);
 
-      if (check.isCheckChannelCount(drawingCount, allMemberSize)) {
+    if (!check.isCheckChannelCount(drawingCount, allMemberSize)) {
+      checkResult = inputCheck_specification_NG;
+    }
+
+    switch (checkResult) {
+      case inputCheck_number_NG:
+        console.log("引数が数字じゃない。");
+        msg.reply(errorCheckMsg);
+        break;
+
+      case inputCheck_specification_NG:
+        console.log("引数が参加人数を超えてる。");
+        msg.reply("引数が参加人数を超えてる。");
+        break;
+
+      case check_OK:
         console.log("引数チェックOK");
         // 抽選
         let drawingResultArray = new Array();
@@ -81,22 +96,19 @@ client.on('messageCreate', async msg => {
         console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
 
 
-        results = drawingNo2NameArray.map(x => x.join(' & '));
+        let results = drawingNo2NameArray.map(x => x.join(' & '));
         console.log(results);
 
         for (const result of results) {
           console.log(result);
           msg.reply(result);
         }
-      } else {
-        results.push("引数が参加人数を超えてる。");
-      }
-    } else {
-      results.push(errorCheckMsg);
+        break;
+
+      default:
+        console.log("違う値が入ってるんだが、、-> " + checkResult);
     }
 
-    let reply = results.join('\n');
-    msg.reply(reply);
 
   }
 });
