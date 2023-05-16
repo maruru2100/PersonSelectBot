@@ -3,12 +3,10 @@ const client = new Client({ intents: Object.keys(Intents.FLAGS) });
 const dotenv = require('dotenv');
 const selectPersonService = require('./selectPersonService.js');
 const check = require('./check.js')
+
+// エラーメッセージ
 const errorCheckMsg = '入力値がおかしいです。 「メンション 数字」で連絡ください。';
-const check_OK = '0';
-const inputCheck_number_NG = '1';
-const inputCheck_specification_NG = '2';
-const channelType_voice = 'voice';
-const channelType_text = 'text';
+const errorOverChannelJoin = '指定した抽選人数がチャンネル参加人数を超えています。';
 
 
 dotenv.config();
@@ -46,60 +44,52 @@ client.on('messageCreate', async msg => {
 
   // Botに対してメンションが張られた際に動く
   if (msg.mentions.users.has(process.env.PERSON_SELECT_BOT_ID)) {
+    let result;
     console.log(msg.content);
     // msg.content の内容が「"BotID" "メッセージ"」のため、メッセージだけ取り出す
     const splitMsg = msg.content.split(' ');
     console.log('splitMsg-> ' + splitMsg);
-    const inputDrawingCount = splitMsg[1]; // 抽選人数
-    console.log('抽選人数-> ' + inputDrawingCount);
-    const selectChannelType = splitMsg[2];
-    console.log('voice or text ->' + selectChannelType);
 
-    // メッセージを送ったメンバーが参加しているボイスチャンネルのメンバー一覧取得
-    let members;
-    let allMemberSize;
-    if (channelType_voice == selectChannelType) {
+    // 引数があるかチェック
+    if (splitMsg.length >= 2) {
+      const inputDrawingCount = splitMsg[1]; // 抽選人数
+      console.log('抽選人数-> ' + inputDrawingCount);
+
+      // メッセージを送ったメンバーが参加しているボイスチャンネルのメンバー一覧取得
       let voiceChannel = msg.member.voice.channel;
-      members = voiceChannel.members;
-      allMemberSize = members.size;
+      let members = voiceChannel.members;
+      let allMemberSize = members.size;
       console.log("voice all member size -> " + allMemberSize);
-    } else if (channelType_text == selectChannelType) {
-      let textChannel = msg.channel;
-      members = textChannel.members;
-      allMemberSize = members.size;
-      console.log("text all member size -> " + allMemberSize);
-    }
 
-    let checkResult = check_OK;
+      // 引数の有効性チェック
+      if (check.isCheckInput(inputDrawingCount)) {
+        let drawingCount = Number(inputDrawingCount);
 
-    let result;
+        // 引数がチャンネル参加人数を超えてないかチェック
+        if (check.isCheckChannelCount(inputDrawingCount, allMemberSize)) {
 
-    if (check.isCheckChannelCount(inputDrawingCount, allMemberSize)) {
-    // 引数チェック
-      let drawingCount = Number(inputDrawingCount);
-    if (check.isCheckInput(inputDrawingCount)) {
+          // 抽選
+          let drawingResultArray = new Array();
+          for (let index = 0; index < drawingCount; index++) {
+            drawingResultArray.push(selectPersonService.randomNum(allMemberSize));
+          }
 
-        console.log("引数チェックOK");
-        // 抽選
-        let drawingResultArray = new Array();
-        for (let index = 0; index < drawingCount; index++) {
-          drawingResultArray.push(selectPersonService.randomNum(allMemberSize));
+          let drawingNo2NameArray = drawingResultArray.map(y => members.at(y).displayName); // 抽選結果名前変換配列
+          console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
+
+          result = drawingNo2NameArray.join(" & ");
+          console.log(result);
+        } else {
+          result = errorOverChannelJoin;
         }
-
-        let drawingNo2NameArray = drawingResultArray.map(y => members.at(y).displayName); // 抽選結果名前変換配列
-        console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
-
-
-        result = drawingNo2NameArray.join(" & ");
-        console.log(result);
-
       } else {
-        result ="引数が参加人数を超えてる。";
+        result = errorCheckMsg;
       }
+
     } else {
       result = errorCheckMsg;
     }
-    
+
     msg.reply(result);
 
   }
