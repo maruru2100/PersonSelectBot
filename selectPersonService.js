@@ -23,8 +23,7 @@ module.exports.selectPerson = function(drawingCount, allMemberSize) {
  * @returns 0～size-1 の範囲でランダムなnumber
  */
 module.exports.randomNum = function (size) {
-    // console.log('指定サイズ-> ' + size);
-    let result = Math.floor(Math.random() * size );
+    let result = Math.floor(Math.random() * ( size + 1 ) );
     console.log('randomNumResult -> ' + result);
     return result;
 }
