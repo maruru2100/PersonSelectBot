@@ -43,14 +43,14 @@ client.on('messageCreate', async msg => {
   }
 
   // Botに対してメンションが張られた際に動く
-  if (msg.mentions.users.has(process.env.PERSON_SELECT_BOT_ID)) {
+  if (msg.mentions.users.has(process.env.SELECT_PERSON_BOTID)) {
     let result;
     console.log(msg.content);
     // msg.content の内容が「"BotID" "メッセージ"」のため、メッセージだけ取り出す
     const splitMsg = msg.content.split(' ');
     console.log('splitMsg-> ' + splitMsg);
 
-    // 引数があるかチェック
+    // 引数必須チェック
     if (splitMsg.length >= 2) {
       const inputDrawingCount = splitMsg[1]; // 抽選人数
       console.log('抽選人数-> ' + inputDrawingCount);
