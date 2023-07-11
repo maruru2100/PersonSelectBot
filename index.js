@@ -71,7 +71,14 @@ client.on('messageCreate', async msg => {
           // 抽選
           let drawingResultArray = new Array();
           for (let index = 0; index < drawingCount; index++) {
-            drawingResultArray.push(selectPersonService.randomNum(allMemberSize));
+            let drawingFlag = true;
+            while (drawingFlag) {
+              let drawingNum = selectPersonService.randomNum(allMemberSize);
+              if (!drawingResultArray.includes(drawingNum)) {
+                drawingResultArray.push(drawingNum);
+                drawingFlag = false;
+              }
+            }
           }
 
           let drawingNo2NameArray = drawingResultArray.map(y => members.at(y).displayName); // 抽選結果名前変換配列
