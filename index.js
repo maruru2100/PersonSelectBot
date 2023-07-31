@@ -61,19 +61,33 @@ client.on('messageCreate', async msg => {
       let allMemberSize = members.size;
       console.log("voice all member size -> " + allMemberSize);
 
+      // メッセージを送ったメンバーのアクティビティを取得
+      const runMemberActivity = msg.member.presence.activities.slice(-1)[0];
+
       // 引数の有効性チェック
       if (check.isCheckInput(inputDrawingCount)) {
         let drawingCount = Number(inputDrawingCount);
+        let sameActMemList = new Array();
+
+        // voiceチャンネルのアクティビティ取得 & 起動したメンバーのアクティビティと同じ人のList作成
+        for (let index = 0; index < members.size; index++) {
+          let member = members.at(index);
+          let activity = member.presence.activities.slice(-1)[0] // listでget
+          console.log(member.displayName + ' の ' + activity);
+          if (runMemberActivity === activity) {
+            sameActMemList.push(member)
+          }
+        }
 
         // 引数がチャンネル参加人数を超えてないかチェック
-        if (check.isCheckChannelCount(inputDrawingCount, allMemberSize)) {
+        if (check.isCheckChannelCount(inputDrawingCount, sameActMemList.size)) {
 
           // 抽選
           let drawingResultArray = new Array();
           for (let index = 0; index < drawingCount; index++) {
             let drawingFlag = true;
             while (drawingFlag) {
-              let drawingNum = selectPersonService.randomNum(allMemberSize);
+              let drawingNum = selectPersonService.randomNum(sameActMemList.size);
               if (!drawingResultArray.includes(drawingNum)) {
                 drawingResultArray.push(drawingNum);
                 drawingFlag = false;
