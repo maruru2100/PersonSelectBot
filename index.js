@@ -6,7 +6,7 @@ const check = require('./check.js')
 
 // エラーメッセージ
 const errorCheckMsg = '入力値がおかしいです。 「メンション 数字」で連絡ください。';
-const errorOverChannelJoin = '指定した抽選人数がチャンネル参加人数を超えています。';
+const errorOverChannelJoin = '指定した抽選人数がVoiceVhannel内の同アクティビティ人数を超えています。';
 
 
 dotenv.config();
@@ -61,19 +61,35 @@ client.on('messageCreate', async msg => {
       let allMemberSize = members.size;
       console.log("voice all member size -> " + allMemberSize);
 
+      // メッセージを送ったメンバーのアクティビティを取得
+      const runMemberActivity = msg.member.presence.activities.slice(-1)[0];
+      console.log('起動メンバーのアクティビティ: ' + runMemberActivity);
+
       // 引数の有効性チェック
       if (check.isCheckInput(inputDrawingCount)) {
         let drawingCount = Number(inputDrawingCount);
+        let sameActMemList = new Array();
+
+        // voiceチャンネルのアクティビティ取得 & 起動したメンバーのアクティビティと同じ人のList作成
+        for (let index = 0; index < members.size; index++) {
+          const member = members.at(index);
+          const activity = member.presence.activities.slice(-1)[0] // 配列の後ろから一つ取得
+          // console.log(member.displayName + ' の ' + activity);
+          if (runMemberActivity.equals(activity)) {
+            sameActMemList.push(member)
+          }
+        }
+        console.log('抽選されるメンバー数： ' + sameActMemList.length);
 
         // 引数がチャンネル参加人数を超えてないかチェック
-        if (check.isCheckChannelCount(inputDrawingCount, allMemberSize)) {
+        if (check.isCheckChannelCount(inputDrawingCount, sameActMemList.length)) {
 
           // 抽選
           let drawingResultArray = new Array();
           for (let index = 0; index < drawingCount; index++) {
             let drawingFlag = true;
             while (drawingFlag) {
-              let drawingNum = selectPersonService.randomNum(allMemberSize);
+              let drawingNum = selectPersonService.randomNum(sameActMemList.length);
               if (!drawingResultArray.includes(drawingNum)) {
                 drawingResultArray.push(drawingNum);
                 drawingFlag = false;
@@ -81,8 +97,8 @@ client.on('messageCreate', async msg => {
             }
           }
 
-          let drawingNo2NameArray = drawingResultArray.map(y => members.at(y).displayName); // 抽選結果名前変換配列
-          console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
+          const drawingNo2NameArray = drawingResultArray.map(y => sameActMemList[y].displayName); // 抽選結果名前変換配列
+          // console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
 
           result = drawingNo2NameArray.join(" & ");
           console.log(result);
