@@ -1,4 +1,5 @@
 # .envを上書きできないようにする。
 *.env
-*.vscode
+# *.vscode
 *.env.sumple
+/build/
