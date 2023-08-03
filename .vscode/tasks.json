@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"command": "yarn run compile",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "yarn: compile",
+			"detail": "tsc -p ."
+		},
+		{
+			"type": "shell",
+			"command": "yarn run start",
+			"group": "none",
+			"problemMatcher": [],
+			"label": "yarn: start",
+			"detail": "起動します"
+		}
+	]
+}
