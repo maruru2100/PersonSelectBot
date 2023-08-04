@@ -1,4 +1,4 @@
-import { Message, Client, GuildMember, Activity } from 'discord.js'
+import { Message, Client, GuildMember, Activity, Collection } from 'discord.js'
 import dotenv from 'dotenv'
 import {isCheckInput, isCheckChannelCount} from './check'
 import { ActivityTypes } from 'discord.js/typings/enums';
@@ -52,30 +52,48 @@ client.on('messageCreate', async (msg: Message) => {
             console.log("voice all member size -> " + allMemberSize);
 
             // メッセージを送ったメンバーのアクティビティを取得
-            const runMemberActivity = runMember?.presence?.activities.slice(-1)[0];
+            // TODO: 削除
+            // const runMemberActivity = runMember?.presence?.activities.slice(-1)[0];
+            if (!runMember) {
+                return;
+            }
+            const runMemberActivity = selectPersonService.getMemberActivity(runMember);
             console.log('起動メンバーのアクティビティ: ' + runMemberActivity);
+            if (runMemberActivity == null) {
+                console.log('runMemberActivity が' + runMemberActivity + 'です');
+                return;
+            }
 
             // 引数の有効性チェック
             if (isCheckInput(inputDrawingCount)) {
                 let drawingCount = Number(inputDrawingCount);
-                let sameActMemList: GuildMember[] = new Array();
+                // TODO: 削除
+                // let sameActMemList: GuildMember[] = new Array();
 
-                // voiceチャンネルのアクティビティ取得 & 起動したメンバーのアクティビティと同じ人のList作成
-                for (let index = 0; index < members.size; index++) {
-                    const member = members.at(index);
-                    if (member == null) {
-                        console.log("memberがundifindです");
-                        return;
-                    }
-                    let activity = member.presence?.activities.slice(-1)[0] // 配列の後ろから一つ取得
-                    if (activity == null) {
-                        console.log("activityがundifindです");
-                        return;
-                    }
-                    // console.log(member.displayName + ' の ' + activity);
-                    if (runMemberActivity?.equals(activity)) {
-                        sameActMemList.push(member)
-                    }
+                // // voiceチャンネルのアクティビティ取得 & 起動したメンバーのアクティビティと同じ人のList作成
+                // for (let index = 0; index < members.size; index++) {
+                //     const member = members.at(index);
+                //     if (member == null) {
+                //         console.log("memberがundifindです");
+                //         return;
+                //     }
+                //     // TODO: 削除
+                //     // let activity = member.presence?.activities.slice(-1)[0] // 配列の後ろから一つ取得
+                //     let activity = selectPersonService.getMemberActivity(member);
+                //     if (activity == null) {
+                //         console.log("activityがundifindです");
+                //         return;
+                //     }
+                //     // console.log(member.displayName + ' の ' + activity);
+                //     if (runMemberActivity?.equals(activity)) {
+                //         sameActMemList.push(member)
+                //     }
+                // }
+
+                const sameActMemList = selectPersonService.selectSameActMemList(members, runMemberActivity);
+                if (sameActMemList == null) {
+                    console.log('sameActMemListの中にundifindがありました。');
+                    return;
                 }
                 console.log('抽選されるメンバー数： ' + sameActMemList.length);
                 for (let index = 0; index < sameActMemList.length; index++) {
@@ -88,24 +106,26 @@ client.on('messageCreate', async (msg: Message) => {
                 // 引数がチャンネル参加人数を超えてないかチェック
                 if (isCheckChannelCount(drawingCount, sameActMemList.length)) {
 
-                    // 抽選
-                    let drawingResultArray: number[] = new Array();
-                    for (let index = 0; index < drawingCount; index++) {
-                        let drawingFlag = true;
-                        while (drawingFlag) {
-                            let drawingNum = selectPersonService.randomNum(sameActMemList.length);
-                            if (!drawingResultArray.includes(drawingNum)) {
-                                drawingResultArray.push(drawingNum);
-                                drawingFlag = false;
-                            }
-                        }
-                    }
+                    // TODO: 削除
+                    // // 抽選
+                    // let drawingResultArray: number[] = new Array();
+                    // for (let index = 0; index < drawingCount; index++) {
+                    //     let drawingFlag = true;
+                    //     while (drawingFlag) {
+                    //         let drawingNum = selectPersonService.randomNum(sameActMemList.length);
+                    //         if (!drawingResultArray.includes(drawingNum)) {
+                    //             drawingResultArray.push(drawingNum);
+                    //             drawingFlag = false;
+                    //         }
+                    //     }
+                    // }
 
-                    const drawingNo2NameArray = drawingResultArray.map(y => sameActMemList[y].displayName); // 抽選結果名前変換配列
-                    // console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
+                    // const drawingNo2NameArray = drawingResultArray.map(y => sameActMemList[y].displayName); // 抽選結果名前変換配列
+                    // // console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
 
-                    result = drawingNo2NameArray.join(" & ");
-                    console.log(result);
+                    // result = drawingNo2NameArray.join(" & ");
+                    // console.log(result);
+                    result = selectPersonService.draw(drawingCount, sameActMemList)
                 } else {
                     result = errorOverChannelJoin;
                 }
@@ -125,9 +145,79 @@ client.on('messageCreate', async (msg: Message) => {
 client.login(process.env.DISCORD_TOKEN)
 
 class selectPersonService {
+    /**
+     * 指定した範囲内のランダムな数字を返却する。
+     * 
+     * @param size number
+     * @returns number
+     */
     static randomNum(size: number) {
         const result = Math.floor(Math.random() * (size + 1));
         console.log('randomNumResult -> ' + result);
+        return result;
+    }
+
+    /**
+     * 指定したメンバーのアクティビティ(起動中のゲーム)を返却する。
+     * 
+     * @param member GuildMember
+     * @returns Activity
+     */
+    static getMemberActivity(member: GuildMember) {
+        return member.presence?.activities.slice(-1)[0];
+    }
+
+    static selectSameActMemList(members: Collection<string, GuildMember>, runMemberActivity: Activity) {
+        let sameActMemList: GuildMember[] = new Array();
+
+        // voiceチャンネルのアクティビティ取得 & 起動したメンバーのアクティビティと同じ人のList作成
+        for (let index = 0; index < members.size; index++) {
+            const member = members.at(index);
+            if (member == null) {
+                console.log('Voiceチャンネルメンバー[' + index + ']のmemberがundifindです');
+                return;
+            }
+            // TODO: 削除
+            // let activity = member.presence?.activities.slice(-1)[0] // 配列の後ろから一つ取得
+            let activity = selectPersonService.getMemberActivity(member);
+            if (activity == null) {
+                console.log(member.displayName + 'のactivityがundifindです');
+                return;
+            }
+            // console.log(member.displayName + ' の ' + activity);
+            if (runMemberActivity?.equals(activity)) {
+                sameActMemList.push(member)
+            }
+        }
+        return sameActMemList;
+    }
+
+    /**
+     * 
+     * @param drawingCount 抽選人数
+     * @param sameActMemList bot起動者と同じアクティビティメンバーのリスト
+     * @returns string 抽選にあたったメンバーの表示名リストを"&"で結合した文字列
+     */
+    static draw(drawingCount: number, sameActMemList: GuildMember[]) {
+        let result: string;
+        // 抽選
+        let drawingResultArray: number[] = new Array();
+        for (let index = 0; index < drawingCount; index++) {
+            let drawingFlag = true;
+            while (drawingFlag) {
+                let drawingNum = selectPersonService.randomNum(sameActMemList.length);
+                if (!drawingResultArray.includes(drawingNum)) {
+                    drawingResultArray.push(drawingNum);
+                    drawingFlag = false;
+                }
+            }
+        }
+
+        const drawingNo2NameArray = drawingResultArray.map(y => sameActMemList[y].displayName); // 抽選結果名前変換配列
+        // console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
+
+        result = drawingNo2NameArray.join(" & ");
+        console.log(result);
         return result;
     }
 }
