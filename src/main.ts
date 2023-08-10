@@ -68,10 +68,6 @@ client.on('messageCreate', async (msg: Message) => {
 
 
                 const sameActMemList = selectPersonService.selectSameActMemList(members, runMemberActivity);
-                // if (sameActMemList == null) {
-                //     console.log('sameActMemListの中にundifindがありました。');
-                //     return;
-                // }
                 console.log('抽選されるメンバー数： ' + sameActMemList.length);
                 for (let index = 0; index < sameActMemList.length; index++) {
                     const sameActMem = sameActMemList[index];
