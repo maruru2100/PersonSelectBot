@@ -52,8 +52,6 @@ client.on('messageCreate', async (msg: Message) => {
             console.log("voice all member size -> " + allMemberSize);
 
             // メッセージを送ったメンバーのアクティビティを取得
-            // TODO: 削除
-            // const runMemberActivity = runMember?.presence?.activities.slice(-1)[0];
             if (!runMember) {
                 return;
             }
@@ -67,64 +65,24 @@ client.on('messageCreate', async (msg: Message) => {
             // 引数の有効性チェック
             if (isCheckInput(inputDrawingCount)) {
                 let drawingCount = Number(inputDrawingCount);
-                // TODO: 削除
-                // let sameActMemList: GuildMember[] = new Array();
 
-                // // voiceチャンネルのアクティビティ取得 & 起動したメンバーのアクティビティと同じ人のList作成
-                // for (let index = 0; index < members.size; index++) {
-                //     const member = members.at(index);
-                //     if (member == null) {
-                //         console.log("memberがundifindです");
-                //         return;
-                //     }
-                //     // TODO: 削除
-                //     // let activity = member.presence?.activities.slice(-1)[0] // 配列の後ろから一つ取得
-                //     let activity = selectPersonService.getMemberActivity(member);
-                //     if (activity == null) {
-                //         console.log("activityがundifindです");
-                //         return;
-                //     }
-                //     // console.log(member.displayName + ' の ' + activity);
-                //     if (runMemberActivity?.equals(activity)) {
-                //         sameActMemList.push(member)
-                //     }
-                // }
 
                 const sameActMemList = selectPersonService.selectSameActMemList(members, runMemberActivity);
-                if (sameActMemList == null) {
-                    console.log('sameActMemListの中にundifindがありました。');
-                    return;
-                }
+                // if (sameActMemList == null) {
+                //     console.log('sameActMemListの中にundifindがありました。');
+                //     return;
+                // }
                 console.log('抽選されるメンバー数： ' + sameActMemList.length);
                 for (let index = 0; index < sameActMemList.length; index++) {
-                    const element = sameActMemList[index];
-                    console.log('id[' + index + '] : ' + element);
-                    console.log('メンバー[' + index + '] : ' + element.displayName);
+                    const sameActMem = sameActMemList[index];
+                    console.log('id[' + index + '] : ' + sameActMem);
+                    console.log('メンバー[' + index + '] : ' + sameActMem.displayName);
                     
                 }
 
                 // 引数がチャンネル参加人数を超えてないかチェック
                 if (isCheckChannelCount(drawingCount, sameActMemList.length)) {
 
-                    // TODO: 削除
-                    // // 抽選
-                    // let drawingResultArray: number[] = new Array();
-                    // for (let index = 0; index < drawingCount; index++) {
-                    //     let drawingFlag = true;
-                    //     while (drawingFlag) {
-                    //         let drawingNum = selectPersonService.randomNum(sameActMemList.length);
-                    //         if (!drawingResultArray.includes(drawingNum)) {
-                    //             drawingResultArray.push(drawingNum);
-                    //             drawingFlag = false;
-                    //         }
-                    //     }
-                    // }
-
-                    // const drawingNo2NameArray = drawingResultArray.map(y => sameActMemList[y].displayName); // 抽選結果名前変換配列
-                    // // console.log('drawingNo2NameArray-> ' + drawingNo2NameArray);
-
-                    // result = drawingNo2NameArray.join(" & ");
-                    // console.log(result);
                     result = selectPersonService.draw(drawingCount, sameActMemList)
                 } else {
                     result = errorOverChannelJoin;
@@ -175,14 +133,13 @@ class selectPersonService {
             const member = members.at(index);
             if (member == null) {
                 console.log('Voiceチャンネルメンバー[' + index + ']のmemberがundifindです');
-                return;
+                continue;
             }
-            // TODO: 削除
-            // let activity = member.presence?.activities.slice(-1)[0] // 配列の後ろから一つ取得
+
             let activity = selectPersonService.getMemberActivity(member);
             if (activity == null) {
                 console.log(member.displayName + 'のactivityがundifindです');
-                return;
+                continue;
             }
             // console.log(member.displayName + ' の ' + activity);
             if (runMemberActivity?.equals(activity)) {
