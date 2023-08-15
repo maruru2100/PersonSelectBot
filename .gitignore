@@ -3,3 +3,4 @@
 # *.vscode
 *.env.sumple
 /build/
+node_modules/
