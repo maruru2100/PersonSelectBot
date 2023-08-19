@@ -42,7 +42,7 @@ client.on('messageCreate', async (msg: Message) => {
 
             const runMember = msg.member;
             if (!runMember) {
-                console.log('runMemberが取得できません。');
+                console.log('runMemberが null です。');
                 return;
             }
             console.log('runMember -> ' + runMember.displayName);
@@ -50,18 +50,15 @@ client.on('messageCreate', async (msg: Message) => {
 
             // メッセージを送ったメンバーが参加しているボイスチャンネルのメンバー一覧取得
             let voiceChannel = runMember.voice.channel;
-            let members = voiceChannel?.members;
-            if (members == null) {
-                console.log('members が undefind です。');
+            if (!voiceChannel) {
+                console.log('voiceChannelが null です。');
                 return;
             }
+            let members = voiceChannel.members;
             let allMemberSize = members.size;
             console.log("voice all member size -> " + allMemberSize);
 
             // メッセージを送ったメンバーのアクティビティを取得
-            if (!runMember) {
-                return;
-            }
             const runMemberActivity = selectPersonService.getMemberActivity(runMember);
             console.log('起動メンバーのアクティビティ: ' + runMemberActivity);
             if (runMemberActivity == null) {
@@ -125,7 +122,8 @@ class selectPersonService {
      * @returns Activity
      */
     static getMemberActivity(member: GuildMember) {
-        return member.presence?.activities.slice(-1)[0];
+        // return member.presence?.activities.slice(-1)[0];
+        return member.presence ? member.presence.activities.slice(-1)[0] : undefined;
     }
 
     static selectSameActMemList(members: Collection<string, GuildMember>, runMemberActivity: Activity) {
