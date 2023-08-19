@@ -2,6 +2,7 @@ import { Message, Client, GuildMember, Activity, Collection } from 'discord.js'
 import dotenv from 'dotenv'
 import {isCheckInput, isCheckChannelCount} from './check'
 import { ActivityTypes } from 'discord.js/typings/enums';
+import { log } from 'console';
 
 // エラーメッセージ
 const errorCheckMsg = '入力値がおかしいです。 「メンション 数字」で連絡ください。';
@@ -40,9 +41,15 @@ client.on('messageCreate', async (msg: Message) => {
             console.log('抽選人数-> ' + inputDrawingCount);
 
             const runMember = msg.member;
+            if (!runMember) {
+                console.log('runMemberが取得できません。');
+                return;
+            }
+            console.log('runMember -> ' + runMember.displayName);
+            
 
             // メッセージを送ったメンバーが参加しているボイスチャンネルのメンバー一覧取得
-            let voiceChannel = runMember?.voice.channel;
+            let voiceChannel = runMember.voice.channel;
             let members = voiceChannel?.members;
             if (members == null) {
                 console.log('members が undefind です。');
