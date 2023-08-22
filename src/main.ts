@@ -63,7 +63,6 @@ client.on('messageCreate', async (msg: Message) => {
             console.log('起動メンバーのアクティビティ: ' + runMemberActivity);
             if (runMemberActivity == null) {
                 console.log('runMemberActivity が' + runMemberActivity + 'です');
-                return;
             }
 
             // 引数の有効性チェック
@@ -126,7 +125,7 @@ class selectPersonService {
         return member.presence ? member.presence.activities.slice(-1)[0] : undefined;
     }
 
-    static selectSameActMemList(members: Collection<string, GuildMember>, runMemberActivity: Activity) {
+    static selectSameActMemList(members: Collection<string, GuildMember>, runMemberActivity: Activity | undefined) {
         let sameActMemList: GuildMember[] = new Array();
 
         // voiceチャンネルのアクティビティ取得 & 起動したメンバーのアクティビティと同じ人のList作成
@@ -140,9 +139,14 @@ class selectPersonService {
             let activity = selectPersonService.getMemberActivity(member);
             if (activity == null) {
                 console.log(member.displayName + 'のactivityがundifindです');
+                if (runMemberActivity == null && activity == null) {
+                    // status無しのパターンのリスト作成
+                    sameActMemList.push(member);
+                }
                 continue;
             }
             // console.log(member.displayName + ' の ' + activity);
+            // status有りの場合のリスト作成
             if (runMemberActivity?.equals(activity)) {
                 sameActMemList.push(member)
             }
