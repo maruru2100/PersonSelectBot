@@ -9,7 +9,7 @@ const errorCheckMsg = '入力値がおかしいです。 「メンション 数�
 const errorOverChannelJoin = '指定した抽選人数がVoiceVhannel内の同アクティビティ人数を超えています。';
 
 // 定数定義
-const ACTIONS = 'actions';
+const ACTIONS = 'action';
 const DRAW = 'draw';
 
 
@@ -77,7 +77,7 @@ client.on('messageCreate', async (msg: Message) => {
                     const keys: IterableIterator<string> = membersActivityMap.keys();
                     // let actionsResult: string = '';
                     for (const key of keys) {
-                        result += key;
+                        result += key + ' ';
                     }
                     // msg.reply(actionsResult);
                     break;
@@ -132,7 +132,7 @@ class selectPersonService {
      * @returns number
      */
     static randomNum(size: number) {
-        const result = Math.floor(Math.random() * (size + 1));
+        const result = Math.floor(Math.random() * (size));
         console.log('randomNumResult -> ' + result);
         return result;
     }
@@ -166,9 +166,12 @@ class selectPersonService {
                     console.log('memberList が' + memberList + 'です。');
                     return;
                 }
-                memberList?.push(member);
+                memberList.push(member);
+                console.log(member.displayName + 'を' + mapKey + 'に追加します');
+                
                 membersActivityMap.set(mapKey, memberList)
             } else {
+                console.log(member.displayName + 'にて' + mapKey + 'を新規に追加します');
                 membersActivityMap.set(mapKey, [member]);
             }
         });
