@@ -126,6 +126,33 @@ class selectPersonService {
     }
 
     /**
+     * member一覧から同じActivityの一覧をMap化して返却する。
+     * 
+     * @param members GuildMember
+     * @returns Map<string, GuildMember> keyはActivity.nameから設定
+     */
+    static collectMemberActivity(members: Collection<string, GuildMember>) {
+        let membersActivityMap = new Map<string, GuildMember[]>();
+        members.forEach(member => {
+            const memberActivity = this.getMemberActivity(member);
+            let mapKey = memberActivity == null ? 'default' : memberActivity.name;
+            if (membersActivityMap.has(mapKey)) {
+                let memberList = membersActivityMap.get(mapKey);
+                if (memberList == null) {
+                    // 多分memberListがundifindのことはないと思うけど、、、
+                    console.log('memberList が' + memberList + 'です。');
+                    return;
+                }
+                memberList?.push(member);
+                membersActivityMap.set(mapKey, memberList)
+            } else {
+                membersActivityMap.set(mapKey, [member]);
+            }
+        });
+        return membersActivityMap;
+    }
+
+    /**
      * メンバー一覧から、指定したActivityと同じメンバーの配列を返却する。
      * 
      * @param members GuildMemberのCollection
