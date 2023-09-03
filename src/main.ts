@@ -125,6 +125,13 @@ class selectPersonService {
         return member.presence ? member.presence.activities.slice(-1)[0] : undefined;
     }
 
+    /**
+     * メンバー一覧から、指定したActivityと同じメンバーの配列を返却する。
+     * 
+     * @param members GuildMemberのCollection
+     * @param runMemberActivity Activityまたはundifined
+     * @returns Activityまたはundifinedに一致するGuildMember[]
+     */
     static selectSameActMemList(members: Collection<string, GuildMember>, runMemberActivity: Activity | undefined) {
         let sameActMemList: GuildMember[] = new Array();
 
