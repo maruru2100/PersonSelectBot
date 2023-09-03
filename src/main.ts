@@ -8,6 +8,10 @@ import { log } from 'console';
 const errorCheckMsg = '入力値がおかしいです。 「メンション 数字」で連絡ください。';
 const errorOverChannelJoin = '指定した抽選人数がVoiceVhannel内の同アクティビティ人数を超えています。';
 
+// 定数定義
+const ACTIONS = 'action';
+const DRAW = 'draw';
+
 
 dotenv.config()
 
@@ -29,7 +33,7 @@ client.on('messageCreate', async (msg: Message) => {
     }
     // Botに対してメンションが張られた際に動く
     if (msg.mentions.users.has(process.env.SELECT_PERSON_BOTID ?? "")) {
-        let result;
+        let result: string = '';
         console.log(msg.content);
         // msg.content の内容が「"BotID" "メッセージ"」のため、メッセージだけ取り出す
         const splitMsg = msg.content.split(' ');
@@ -37,7 +41,8 @@ client.on('messageCreate', async (msg: Message) => {
 
         // 引数必須チェック
         if (splitMsg.length >= 2) {
-            const inputDrawingCount = splitMsg[1]; // 抽選人数
+            const inputSpecifiedAction = splitMsg[1] // 指定アクション
+            const inputDrawingCount = splitMsg[2]; // 抽選人数
             console.log('抽選人数-> ' + inputDrawingCount);
 
             const runMember = msg.member;
@@ -65,29 +70,47 @@ client.on('messageCreate', async (msg: Message) => {
                 console.log('runMemberActivity が' + runMemberActivity + 'です');
             }
 
-            // 引数の有効性チェック
-            if (isCheckInput(inputDrawingCount)) {
-                let drawingCount = Number(inputDrawingCount);
+            const membersActivityMap = selectPersonService.collectMemberActivity(members);
+
+            switch (inputSpecifiedAction) {
+                case ACTIONS:
+                    const keys: IterableIterator<string> = membersActivityMap.keys();
+                    // let actionsResult: string = '';
+                    for (const key of keys) {
+                        result += key + ' ';
+                    }
+                    // msg.reply(actionsResult);
+                    break;
+                
+                case DRAW:
+                    // 引数の有効性チェック
+                    if (isCheckInput(inputDrawingCount)) {
+                        let drawingCount = Number(inputDrawingCount);
 
 
-                const sameActMemList = selectPersonService.selectSameActMemList(members, runMemberActivity);
-                console.log('抽選されるメンバー数： ' + sameActMemList.length);
-                for (let index = 0; index < sameActMemList.length; index++) {
-                    const sameActMem = sameActMemList[index];
-                    console.log('id[' + index + '] : ' + sameActMem);
-                    console.log('メンバー[' + index + '] : ' + sameActMem.displayName);
-                    
-                }
+                        const sameActMemList = selectPersonService.selectSameActMemList(members, runMemberActivity);
+                        console.log('抽選されるメンバー数： ' + sameActMemList.length);
+                        for (let index = 0; index < sameActMemList.length; index++) {
+                            const sameActMem = sameActMemList[index];
+                            console.log('id[' + index + '] : ' + sameActMem);
+                            console.log('メンバー[' + index + '] : ' + sameActMem.displayName);
 
-                // 引数がチャンネル参加人数を超えてないかチェック
-                if (isCheckChannelCount(drawingCount, sameActMemList.length)) {
+                        }
 
-                    result = selectPersonService.draw(drawingCount, sameActMemList)
-                } else {
-                    result = errorOverChannelJoin;
-                }
-            } else {
-                result = errorCheckMsg;
+                        // 引数がチャンネル参加人数を超えてないかチェック
+                        if (isCheckChannelCount(drawingCount, sameActMemList.length)) {
+
+                            result = selectPersonService.draw(drawingCount, sameActMemList)
+                        } else {
+                            result = errorOverChannelJoin;
+                        }
+                    } else {
+                        result = errorCheckMsg;
+                    }
+                    break;
+
+                default:
+                    break;
             }
 
         } else {
@@ -109,7 +132,7 @@ class selectPersonService {
      * @returns number
      */
     static randomNum(size: number) {
-        const result = Math.floor(Math.random() * (size + 1));
+        const result = Math.floor(Math.random() * (size));
         console.log('randomNumResult -> ' + result);
         return result;
     }
@@ -125,6 +148,43 @@ class selectPersonService {
         return member.presence ? member.presence.activities.slice(-1)[0] : undefined;
     }
 
+    /**
+     * member一覧から同じActivityの一覧をMap化して返却する。
+     * 
+     * @param members GuildMember
+     * @returns Map<string, GuildMember> keyはActivity.nameから設定
+     */
+    static collectMemberActivity(members: Collection<string, GuildMember>) {
+        let membersActivityMap = new Map<string, GuildMember[]>();
+        members.forEach(member => {
+            const memberActivity = this.getMemberActivity(member);
+            let mapKey = memberActivity == null ? 'default' : memberActivity.name;
+            if (membersActivityMap.has(mapKey)) {
+                let memberList = membersActivityMap.get(mapKey);
+                if (memberList == null) {
+                    // 多分memberListがundifindのことはないと思うけど、、、
+                    console.log('memberList が' + memberList + 'です。');
+                    return;
+                }
+                memberList.push(member);
+                console.log(member.displayName + 'を' + mapKey + 'に追加します');
+                
+                membersActivityMap.set(mapKey, memberList)
+            } else {
+                console.log(member.displayName + 'にて' + mapKey + 'を新規に追加します');
+                membersActivityMap.set(mapKey, [member]);
+            }
+        });
+        return membersActivityMap;
+    }
+
+    /**
+     * メンバー一覧から、指定したActivityと同じメンバーの配列を返却する。
+     * 
+     * @param members GuildMemberのCollection
+     * @param runMemberActivity Activityまたはundifined
+     * @returns Activityまたはundifinedに一致するGuildMember[]
+     */
     static selectSameActMemList(members: Collection<string, GuildMember>, runMemberActivity: Activity | undefined) {
         let sameActMemList: GuildMember[] = new Array();
 
