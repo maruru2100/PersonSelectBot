@@ -8,6 +8,10 @@ import { log } from 'console';
 const errorCheckMsg = '入力値がおかしいです。 「メンション 数字」で連絡ください。';
 const errorOverChannelJoin = '指定した抽選人数がVoiceVhannel内の同アクティビティ人数を超えています。';
 
+// 定数定義
+const ACTIONS = 'actions';
+const DRAW = 'draw';
+
 
 dotenv.config()
 
@@ -29,7 +33,7 @@ client.on('messageCreate', async (msg: Message) => {
     }
     // Botに対してメンションが張られた際に動く
     if (msg.mentions.users.has(process.env.SELECT_PERSON_BOTID ?? "")) {
-        let result;
+        let result: string = '';
         console.log(msg.content);
         // msg.content の内容が「"BotID" "メッセージ"」のため、メッセージだけ取り出す
         const splitMsg = msg.content.split(' ');
@@ -37,7 +41,8 @@ client.on('messageCreate', async (msg: Message) => {
 
         // 引数必須チェック
         if (splitMsg.length >= 2) {
-            const inputDrawingCount = splitMsg[1]; // 抽選人数
+            const inputSpecifiedAction = splitMsg[1] // 指定アクション
+            const inputDrawingCount = splitMsg[2]; // 抽選人数
             console.log('抽選人数-> ' + inputDrawingCount);
 
             const runMember = msg.member;
@@ -65,29 +70,47 @@ client.on('messageCreate', async (msg: Message) => {
                 console.log('runMemberActivity が' + runMemberActivity + 'です');
             }
 
-            // 引数の有効性チェック
-            if (isCheckInput(inputDrawingCount)) {
-                let drawingCount = Number(inputDrawingCount);
+            const membersActivityMap = selectPersonService.collectMemberActivity(members);
+
+            switch (inputSpecifiedAction) {
+                case ACTIONS:
+                    const keys: IterableIterator<string> = membersActivityMap.keys();
+                    // let actionsResult: string = '';
+                    for (const key of keys) {
+                        result += key;
+                    }
+                    // msg.reply(actionsResult);
+                    break;
+                
+                case DRAW:
+                    // 引数の有効性チェック
+                    if (isCheckInput(inputDrawingCount)) {
+                        let drawingCount = Number(inputDrawingCount);
 
 
-                const sameActMemList = selectPersonService.selectSameActMemList(members, runMemberActivity);
-                console.log('抽選されるメンバー数： ' + sameActMemList.length);
-                for (let index = 0; index < sameActMemList.length; index++) {
-                    const sameActMem = sameActMemList[index];
-                    console.log('id[' + index + '] : ' + sameActMem);
-                    console.log('メンバー[' + index + '] : ' + sameActMem.displayName);
-                    
-                }
+                        const sameActMemList = selectPersonService.selectSameActMemList(members, runMemberActivity);
+                        console.log('抽選されるメンバー数： ' + sameActMemList.length);
+                        for (let index = 0; index < sameActMemList.length; index++) {
+                            const sameActMem = sameActMemList[index];
+                            console.log('id[' + index + '] : ' + sameActMem);
+                            console.log('メンバー[' + index + '] : ' + sameActMem.displayName);
 
-                // 引数がチャンネル参加人数を超えてないかチェック
-                if (isCheckChannelCount(drawingCount, sameActMemList.length)) {
+                        }
 
-                    result = selectPersonService.draw(drawingCount, sameActMemList)
-                } else {
-                    result = errorOverChannelJoin;
-                }
-            } else {
-                result = errorCheckMsg;
+                        // 引数がチャンネル参加人数を超えてないかチェック
+                        if (isCheckChannelCount(drawingCount, sameActMemList.length)) {
+
+                            result = selectPersonService.draw(drawingCount, sameActMemList)
+                        } else {
+                            result = errorOverChannelJoin;
+                        }
+                    } else {
+                        result = errorCheckMsg;
+                    }
+                    break;
+
+                default:
+                    break;
             }
 
         } else {
