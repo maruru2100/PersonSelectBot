@@ -1,6 +1,6 @@
 import { Message, Client, GuildMember, Activity, Collection } from 'discord.js'
 import dotenv from 'dotenv'
-import {isCheckInput, isCheckChannelCount} from './check'
+import {canStr2Nan, isCheckChannelCount} from './check'
 import { ActivityTypes } from 'discord.js/typings/enums';
 import { log } from 'console';
 
@@ -84,7 +84,7 @@ client.on('messageCreate', async (msg: Message) => {
                 
                 case DRAW:
                     // 引数の有効性チェック
-                    if (isCheckInput(inputDrawingCount)) {
+                    if (canStr2Nan(inputDrawingCount)) {
                         let drawingCount = Number(inputDrawingCount);
 
 
