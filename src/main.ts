@@ -125,7 +125,7 @@ client.on('messageCreate', async (msg: Message) => {
             }
 
         } else {
-            result = errorCheckNumMsg;
+            result = errorNotEnoughArgument;
         }
 
         msg.reply(result);
