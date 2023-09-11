@@ -1,4 +1,4 @@
-export function isCheckInput(input:string) {
+export function canStr2Nan(input:string) {
     if (isNaN(Number(input))) {
         console.log('引数が数字じゃないです');
         return false;
