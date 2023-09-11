@@ -125,6 +125,46 @@ client.on('messageCreate', async (msg: Message) => {
 client.login(process.env.DISCORD_TOKEN)
 
 class selectPersonService {
+
+    /**
+     * メンバーのアクティビティーマップから指定されたアクティビティーの一覧を取得し、そこから指定された人数を抽選する。
+     * 抽選前に以下のチェックを実施し、問題がある場合はエラーメッセージを返却する。
+     * 1. 指定Activityがmapのkeyの中に存在しているか。
+     * 2. 指定人数が数字か？
+     * 
+     * @param membersActivityMap Map<string, GuildMember[]> アクティビティ名をKeyにしたGuildMemberのList
+     * @param inputDrawingCount string numberに変更して使用する。
+     * @param specifiedActivity string 指定activity
+     * @returns 
+     */
+    static checkAndDraw(membersActivityMap: Map<string, GuildMember[]>, inputDrawingCount: string, specifiedActivity: string): string {
+        // Activity存在チェック
+        if (!membersActivityMap.has(specifiedActivity)) {
+            return errorNotExitsActivity;
+        }
+        if (!canStr2Nan(inputDrawingCount)) {
+            return errorCheckNumMsg;
+        }
+        const drawingCount = Number(inputDrawingCount);
+        const sameActMemList = membersActivityMap.get(specifiedActivity);
+        if (sameActMemList == null) {
+            return 'keyがあるのに、配列がundifindになってます。なんで？？？？'
+        }
+
+        // ログ出力
+        for (let index = 0; index < sameActMemList.length; index++) {
+            const sameActMem = sameActMemList[index];
+            console.log('id[' + index + '] : ' + sameActMem);
+            console.log('メンバー[' + index + '] : ' + sameActMem.displayName);
+        }
+
+        if (isCheckChannelCount(drawingCount,sameActMemList.length)) {
+            return selectPersonService.draw(drawingCount,sameActMemList);
+        } else {
+            // 抽選人数が抽選母数を超えている場合は全件を返却
+            return selectPersonService.draw(sameActMemList.length, sameActMemList);
+        }
+    }
     /**
      * 指定した範囲内のランダムな数字を返却する。
      * 
