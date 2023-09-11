@@ -118,6 +118,7 @@ client.on('messageCreate', async (msg: Message) => {
                     const inputDrawingCountForAct = splitMsg[3]; // 抽選人数
                     console.log('抽選人数-> ' + inputDrawingCountForAct);
                     result = selectPersonService.checkAndDraw(membersActivityMap,inputDrawingCountForAct,specifiedActivity);
+                    break;
 
                 default:
                     result = '一昨日きやがれ！！'
