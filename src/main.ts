@@ -5,12 +5,15 @@ import { ActivityTypes } from 'discord.js/typings/enums';
 import { log } from 'console';
 
 // エラーメッセージ
-const errorCheckMsg = '入力値がおかしいです。 「メンション 数字」で連絡ください。';
+const errorNotEnoughArgument = '引数が指定されていません。「act」,「draw」,「actdraw」のいずれかを設定してください。'
+const errorCheckNumMsg = '入力値がおかしいです。 抽選人数は数字で入力ください。';
 const errorOverChannelJoin = '指定した抽選人数がVoiceVhannel内の同アクティビティ人数を超えています。';
+const errorNotExitsActivity = '指定したActivityをしている人はボイスチャット内にいません。'
 
 // 定数定義
-const ACTIONS = 'action';
+const ACTIONS = 'act';
 const DRAW = 'draw';
+const ACTDRAW = 'actdraw'
 
 
 dotenv.config()
@@ -42,9 +45,7 @@ client.on('messageCreate', async (msg: Message) => {
         // 引数必須チェック
         if (splitMsg.length >= 2) {
             const inputSpecifiedAction = splitMsg[1] // 指定アクション
-            const inputDrawingCount = splitMsg[2]; // 抽選人数
-            console.log('抽選人数-> ' + inputDrawingCount);
-
+            
             const runMember = msg.member;
             if (!runMember) {
                 console.log('runMemberが null です。');
@@ -83,6 +84,8 @@ client.on('messageCreate', async (msg: Message) => {
                     break;
                 
                 case DRAW:
+                    const inputDrawingCount = splitMsg[2]; // 抽選人数
+                    console.log('抽選人数-> ' + inputDrawingCount);
                     // 引数の有効性チェック
                     if (canStr2Nan(inputDrawingCount)) {
                         let drawingCount = Number(inputDrawingCount);
@@ -105,16 +108,24 @@ client.on('messageCreate', async (msg: Message) => {
                             result = errorOverChannelJoin;
                         }
                     } else {
-                        result = errorCheckMsg;
+                        result = errorCheckNumMsg;
                     }
                     break;
+                
+                case ACTDRAW:
+                    const specifiedActivity = splitMsg[2]; // 指定アクティビティ
+                    console.log('指定Activity-> ' + specifiedActivity);
+                    const inputDrawingCountForAct = splitMsg[3]; // 抽選人数
+                    console.log('抽選人数-> ' + inputDrawingCountForAct);
+                    result = selectPersonService.checkAndDraw(membersActivityMap,inputDrawingCountForAct,specifiedActivity);
 
                 default:
+                    result = '一昨日きやがれ！！'
                     break;
             }
 
         } else {
-            result = errorCheckMsg;
+            result = errorCheckNumMsg;
         }
 
         msg.reply(result);
@@ -184,7 +195,6 @@ class selectPersonService {
      * @returns Activity
      */
     static getMemberActivity(member: GuildMember) {
-        // return member.presence?.activities.slice(-1)[0];
         return member.presence ? member.presence.activities.slice(-1)[0] : undefined;
     }
 
@@ -222,10 +232,10 @@ class selectPersonService {
      * メンバー一覧から、指定したActivityと同じメンバーの配列を返却する。
      * 
      * @param members GuildMemberのCollection
-     * @param runMemberActivity Activityまたはundifined
+     * @param memberActivity Activityまたはundifined
      * @returns Activityまたはundifinedに一致するGuildMember[]
      */
-    static selectSameActMemList(members: Collection<string, GuildMember>, runMemberActivity: Activity | undefined) {
+    static selectSameActMemList(members: Collection<string, GuildMember>, memberActivity: Activity | undefined) {
         let sameActMemList: GuildMember[] = new Array();
 
         // voiceチャンネルのアクティビティ取得 & 起動したメンバーのアクティビティと同じ人のList作成
@@ -239,7 +249,7 @@ class selectPersonService {
             let activity = selectPersonService.getMemberActivity(member);
             if (activity == null) {
                 console.log(member.displayName + 'のactivityがundifindです');
-                if (runMemberActivity == null && activity == null) {
+                if (memberActivity == null && activity == null) {
                     // status無しのパターンのリスト作成
                     sameActMemList.push(member);
                 }
@@ -247,7 +257,7 @@ class selectPersonService {
             }
             // console.log(member.displayName + ' の ' + activity);
             // status有りの場合のリスト作成
-            if (runMemberActivity?.equals(activity)) {
+            if (memberActivity?.equals(activity)) {
                 sameActMemList.push(member)
             }
         }
