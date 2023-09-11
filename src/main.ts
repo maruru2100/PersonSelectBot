@@ -48,7 +48,7 @@ client.on('messageCreate', async (msg: Message) => {
             
             const runMember = msg.member;
             if (!runMember) {
-                console.log('runMemberが null です。');
+                console.error('runMemberが null です。');
                 return;
             }
             console.log('runMember -> ' + runMember.displayName);
@@ -57,7 +57,7 @@ client.on('messageCreate', async (msg: Message) => {
             // メッセージを送ったメンバーが参加しているボイスチャンネルのメンバー一覧取得
             let voiceChannel = runMember.voice.channel;
             if (!voiceChannel) {
-                console.log('voiceChannelが null です。');
+                console.error('voiceChannelが null です。');
                 return;
             }
             let members = voiceChannel.members;
@@ -68,7 +68,7 @@ client.on('messageCreate', async (msg: Message) => {
             const runMemberActivity = selectPersonService.getMemberActivity(runMember);
             console.log('起動メンバーのアクティビティ: ' + runMemberActivity);
             if (runMemberActivity == null) {
-                console.log('runMemberActivity が' + runMemberActivity + 'です');
+                console.error('runMemberActivity が' + runMemberActivity + 'です');
             }
 
             const membersActivityMap = selectPersonService.collectMemberActivity(members);
@@ -213,7 +213,7 @@ class selectPersonService {
                 let memberList = membersActivityMap.get(mapKey);
                 if (memberList == null) {
                     // 多分memberListがundifindのことはないと思うけど、、、
-                    console.log('memberList が' + memberList + 'です。');
+                    console.error('memberList が' + memberList + 'です。');
                     return;
                 }
                 memberList.push(member);
