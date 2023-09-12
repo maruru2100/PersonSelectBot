@@ -69,6 +69,7 @@ client.on('messageCreate', async (msg: Message) => {
             console.log('起動メンバーのアクティビティ: ' + runMemberActivity);
             if (runMemberActivity == null) {
                 console.error('runMemberActivity が' + runMemberActivity + 'です');
+                return;
             }
 
             const membersActivityMap = selectPersonService.collectMemberActivity(members);
@@ -86,30 +87,7 @@ client.on('messageCreate', async (msg: Message) => {
                 case DRAW:
                     const inputDrawingCount = splitMsg[2]; // 抽選人数
                     console.log('抽選人数-> ' + inputDrawingCount);
-                    // 引数の有効性チェック
-                    if (canStr2Nan(inputDrawingCount)) {
-                        let drawingCount = Number(inputDrawingCount);
-
-
-                        const sameActMemList = selectPersonService.selectSameActMemList(members, runMemberActivity);
-                        console.log('抽選されるメンバー数： ' + sameActMemList.length);
-                        for (let index = 0; index < sameActMemList.length; index++) {
-                            const sameActMem = sameActMemList[index];
-                            console.log('id[' + index + '] : ' + sameActMem);
-                            console.log('メンバー[' + index + '] : ' + sameActMem.displayName);
-
-                        }
-
-                        // 引数がチャンネル参加人数を超えてないかチェック
-                        if (isCheckChannelCount(drawingCount, sameActMemList.length)) {
-
-                            result = selectPersonService.draw(drawingCount, sameActMemList)
-                        } else {
-                            result = errorOverChannelJoin;
-                        }
-                    } else {
-                        result = errorCheckNumMsg;
-                    }
+                    result =  selectPersonService.checkAndDraw(membersActivityMap, inputDrawingCount, runMemberActivity.name)
                     break;
                 
                 case ACTDRAW:
@@ -117,7 +95,7 @@ client.on('messageCreate', async (msg: Message) => {
                     console.log('指定Activity-> ' + specifiedActivity);
                     const inputDrawingCountForAct = splitMsg[3]; // 抽選人数
                     console.log('抽選人数-> ' + inputDrawingCountForAct);
-                    result = selectPersonService.checkAndDraw(membersActivityMap,inputDrawingCountForAct,specifiedActivity);
+                    result = selectPersonService.checkAndDraw(membersActivityMap, inputDrawingCountForAct, specifiedActivity);
                     break;
 
                 default:
