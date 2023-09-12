@@ -39,12 +39,12 @@ client.on('messageCreate', async (msg: Message) => {
         let result: string = '';
         console.log(msg.content);
         // msg.content の内容が「"BotID" "メッセージ"」のため、メッセージだけ取り出す
-        const splitMsg = msg.content.split(' ');
-        console.log('splitMsg-> ' + splitMsg);
+        const receivingMsg = msg.content.split(' ');
+        console.log('receivingMsg-> ' + receivingMsg);
 
         // 引数必須チェック
-        if (splitMsg.length >= 2) {
-            const inputSpecifiedAction = splitMsg[1] // 指定アクション
+        if (receivingMsg.length >= 2) {
+            const inputSpecifiedAction = receivingMsg[1] // 指定アクション
             
             const runMember = msg.member;
             if (!runMember) {
@@ -83,15 +83,16 @@ client.on('messageCreate', async (msg: Message) => {
                     break;
                 
                 case DRAW:
-                    const inputDrawingCount = splitMsg[2]; // 抽選人数
+                    const inputDrawingCount = receivingMsg[2]; // 抽選人数
                     console.log('抽選人数-> ' + inputDrawingCount);
                     result =  selectPersonService.checkAndDraw(membersActivityMap, inputDrawingCount, runMemberActivity.name)
                     break;
                 
                 case ACTDRAW:
-                    const specifiedActivity = splitMsg[2]; // 指定アクティビティ
+                    const splitMsg = msg.content.split(',');
+                    const specifiedActivity = splitMsg[1]; // 指定アクティビティ
                     console.log('指定Activity-> ' + specifiedActivity);
-                    const inputDrawingCountForAct = splitMsg[3]; // 抽選人数
+                    const inputDrawingCountForAct = splitMsg[2]; // 抽選人数
                     console.log('抽選人数-> ' + inputDrawingCountForAct);
                     result = selectPersonService.checkAndDraw(membersActivityMap, inputDrawingCountForAct, specifiedActivity);
                     break;
