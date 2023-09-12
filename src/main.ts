@@ -55,7 +55,7 @@ client.on('messageCreate', async (msg: Message) => {
             
 
             // メッセージを送ったメンバーが参加しているボイスチャンネルのメンバー一覧取得
-            let voiceChannel = runMember.voice.channel;
+            let voiceChannel = await runMember.voice.channel?.fetch();
             if (!voiceChannel) {
                 console.error('voiceChannelが null です。');
                 return;
@@ -77,11 +77,9 @@ client.on('messageCreate', async (msg: Message) => {
             switch (inputSpecifiedAction) {
                 case ACTIONS:
                     const keys: IterableIterator<string> = membersActivityMap.keys();
-                    // let actionsResult: string = '';
                     for (const key of keys) {
                         result += key + ' ';
                     }
-                    // msg.reply(actionsResult);
                     break;
                 
                 case DRAW:
@@ -107,6 +105,8 @@ client.on('messageCreate', async (msg: Message) => {
             result = errorNotEnoughArgument;
         }
 
+        console.log('------------------------------');
+        
         msg.reply(result);
 
     }
