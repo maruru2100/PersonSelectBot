@@ -13,7 +13,8 @@ const errorNotExitsActivity = '指定したActivityをしている人はボイ�
 // 定数定義
 const ACTIONS = 'act';
 const DRAW = 'draw';
-const ACTDRAW = 'actdraw'
+const ACTDRAW = 'actdraw';
+const RANDOM = 'random';
 
 
 dotenv.config()
@@ -69,7 +70,6 @@ client.on('messageCreate', async (msg: Message) => {
             console.log('起動メンバーのアクティビティ: ' + runMemberActivity);
             if (runMemberActivity == null) {
                 console.error('runMemberActivity が' + runMemberActivity + 'です');
-                return;
             }
 
             const membersActivityMap = selectPersonService.collectMemberActivity(members);
@@ -85,7 +85,7 @@ client.on('messageCreate', async (msg: Message) => {
                 case DRAW:
                     const inputDrawingCount = receivingMsg[2]; // 抽選人数
                     console.log('抽選人数-> ' + inputDrawingCount);
-                    result =  selectPersonService.checkAndDraw(membersActivityMap, inputDrawingCount, runMemberActivity.name)
+                    result =  selectPersonService.checkAndDraw(membersActivityMap, inputDrawingCount, runMemberActivity?.name)
                     break;
                 
                 case ACTDRAW:
@@ -95,6 +95,13 @@ client.on('messageCreate', async (msg: Message) => {
                     const inputDrawingCountForAct = splitMsg[2]; // 抽選人数
                     console.log('抽選人数-> ' + inputDrawingCountForAct);
                     result = selectPersonService.checkAndDraw(membersActivityMap, inputDrawingCountForAct, specifiedActivity);
+                    break;
+                
+                case RANDOM:
+                    const inputDrawingCount4VoiceChannel = receivingMsg[2]; // 抽選人数
+                    console.log('抽選人数-> ' + inputDrawingCount4VoiceChannel);
+                    result =  selectPersonService.voiceChannelRandomDraw(members, inputDrawingCount4VoiceChannel);
+
                     break;
 
                 default:
@@ -116,6 +123,30 @@ client.on('messageCreate', async (msg: Message) => {
 client.login(process.env.DISCORD_TOKEN)
 
 class selectPersonService {
+    
+    /**
+     * member一覧からランダムで指定された人数を抽選する。
+     * 抽選回数が数字以外の場合はエラーメッセージを返却する。
+     * 
+     * @param members Collection<string, GuildMember> チャンネルから取得したメンバー一覧
+     * @param inputDrawingCount string 抽選回数
+     * @returns string 抽選結果メッセージ
+     */
+    static voiceChannelRandomDraw(members: Collection<string, GuildMember>, inputDrawingCount: string): string {
+        if (!canStr2Nan(inputDrawingCount)) {
+            return errorCheckNumMsg;
+        }
+        const drawingCount = Number(inputDrawingCount);
+        const membersList: GuildMember[] = new Array;
+        members.forEach(member => {
+            membersList.push(member);
+        });
+        if (isCheckChannelCount(drawingCount, members.size)) {
+            return selectPersonService.draw(drawingCount, membersList);
+        } else {
+            return selectPersonService.draw(membersList.length, membersList);
+        }
+    }
 
     /**
      * メンバーのアクティビティーマップから指定されたアクティビティーの一覧を取得し、そこから指定された人数を抽選する。
@@ -126,9 +157,13 @@ class selectPersonService {
      * @param membersActivityMap Map<string, GuildMember[]> アクティビティ名をKeyにしたGuildMemberのList
      * @param inputDrawingCount string numberに変更して使用する。
      * @param specifiedActivity string 指定activity
-     * @returns 
+     * @returns string Activityを指定した抽選結果のメッセージ
      */
-    static checkAndDraw(membersActivityMap: Map<string, GuildMember[]>, inputDrawingCount: string, specifiedActivity: string): string {
+    static checkAndDraw(membersActivityMap: Map<string, GuildMember[]>, inputDrawingCount: string, specifiedActivity: string | undefined): string {
+        // draw時の起動者がundifindの場合の対応
+        if (specifiedActivity == null) {
+            specifiedActivity = 'default';
+        }
         // Activity存在チェック
         if (!membersActivityMap.has(specifiedActivity)) {
             return errorNotExitsActivity;
@@ -236,7 +271,6 @@ class selectPersonService {
                 continue;
             }
             // console.log(member.displayName + ' の ' + activity);
-            // status有りの場合のリスト作成
             if (memberActivity?.equals(activity)) {
                 sameActMemList.push(member)
             }
@@ -245,9 +279,11 @@ class selectPersonService {
     }
 
     /**
+     * 抽選処理を行う。
+     * 
      * 
      * @param drawingCount 抽選人数
-     * @param sameActMemList bot起動者と同じアクティビティメンバーのリスト
+     * @param sameActMemList 指定されたActivityと同じActivityメンバーのリスト
      * @returns string 抽選にあたったメンバーの表示名リストを"&"で結合した文字列
      */
     static draw(drawingCount: number, sameActMemList: GuildMember[]) {
