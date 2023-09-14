@@ -20,7 +20,7 @@ const RANDOM = 'random';
 dotenv.config()
 
 const client = new Client({
-    intents: ['GUILDS', 'GUILD_MEMBERS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES', 'MESSAGE_CONTENT', 'GUILD_PRESENCES'],
+    intents: ['GUILDS', 'GUILD_MEMBERS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES', 'MESSAGE_CONTENT', 'GUILD_PRESENCES', 'GUILD_VOICE_STATES'],
 })
 
 client.once('ready', () => {
